@@ -1,7 +1,9 @@
-const { ethers } = require("hardhat");
-const fs = require("fs");
+import { network } from "hardhat";
+import { writeFileSync, mkdirSync } from "fs";
 
 async function main() {
+  const { ethers } = await network.connect();
+
   const [deployer] = await ethers.getSigners();
   console.log("Deploying with:", deployer.address);
 
@@ -12,16 +14,21 @@ async function main() {
   const address = await contract.getAddress();
   console.log("LandRegistry deployed to:", address);
 
-  // Save address + ABI for Integration Engineer
-  const artifact = await ethers.getContractFactory("LandRegistry");
-  fs.writeFileSync("./deployments/contract.json", JSON.stringify({
-    address,
-    abi: JSON.parse(artifact.interface.formatJson()),
-    network: hre.network.name,
-    deployedAt: new Date().toISOString(),
-  }, null, 2));
+  mkdirSync("./deployments", { recursive: true });
+  writeFileSync(
+    "./deployments/contract.json",
+    JSON.stringify(
+      {
+        address,
+        network: network.name,
+        deployedAt: new Date().toISOString(),
+      },
+      null,
+      2
+    )
+  );
 
-  con
-main().catch(console.error);sole.log("Saved to deployments/contract.json");
+  console.log("Saved to deployments/contract.json");
 }
 
+main().catch(console.error);
