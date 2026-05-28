@@ -33,7 +33,7 @@ func main() {
 	defer client.Close()
 
 	history := land.NewHistoryRecorder()
-	listener, err := chain.NewListener(client, cfg.ContractAddress, history, slog.Default())
+	listener, err := chain.NewListener(client, cfg.ContractAddress, history, slog.Default(), cfg.StartBlock)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,6 +42,9 @@ func main() {
 		Addr:              cfg.HTTPAddr,
 		Handler:           api.NewRouter(history),
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	errs := make(chan error, 2)
