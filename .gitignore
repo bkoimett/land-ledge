@@ -37,3 +37,4 @@ go.work.sum
 # .vscode/
 node_modules/
 listener
+cache/

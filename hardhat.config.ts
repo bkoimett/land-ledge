@@ -26,6 +26,7 @@ export default defineConfig({
       type: "edr-simulated",
       chainType: "l1",
     },
+/*
   amoy: {
   type: "http",
   chainType: "l1",
@@ -34,5 +35,6 @@ export default defineConfig({
   gas: 2000000,
   gasPrice: 25000000000,
 },
+*/
   },
 });
