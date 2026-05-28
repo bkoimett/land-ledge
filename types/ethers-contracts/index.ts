@@ -4,5 +4,5 @@
 export type { Counter } from './Counter.js';
 export type { LandRegistry } from './LandRegistry.js';
 export * as factories from './factories/index.js';
-export { LandRegistry__factory } from './factories/LandRegistry__factory.js';
 export { Counter__factory } from './factories/Counter__factory.js';
+export { LandRegistry__factory } from './factories/LandRegistry__factory.js';

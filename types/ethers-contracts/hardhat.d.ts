@@ -10,17 +10,17 @@ import * as Contracts from "./index.js";
 
 declare module "@nomicfoundation/hardhat-ethers/types" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
-  getContractFactory(name: 'LandRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.LandRegistry__factory>
-getContractFactory(name: 'Counter', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.Counter__factory>
+  getContractFactory(name: 'Counter', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.Counter__factory>
+getContractFactory(name: 'LandRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.LandRegistry__factory>
 
-  getContractAt(name: 'LandRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.LandRegistry>
-getContractAt(name: 'Counter', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.Counter>
+  getContractAt(name: 'Counter', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.Counter>
+getContractAt(name: 'LandRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.LandRegistry>
 
-  deployContract(name: 'LandRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.LandRegistry>
-deployContract(name: 'Counter', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Counter>
+  deployContract(name: 'Counter', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Counter>
+deployContract(name: 'LandRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.LandRegistry>
 
-  deployContract(name: 'LandRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.LandRegistry>
-deployContract(name: 'Counter', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Counter>
+  deployContract(name: 'Counter', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Counter>
+deployContract(name: 'LandRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.LandRegistry>
 
     // default types
     getContractFactory(
