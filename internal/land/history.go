@@ -3,6 +3,7 @@ package land
 import (
 	"errors"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -49,15 +50,24 @@ type OwnershipHistory struct {
 type HistoryRecorder struct {
 	mu     sync.RWMutex
 	events map[string][]Event
+	seen   map[string]struct{}
 }
 
 func NewHistoryRecorder() *HistoryRecorder {
-	return &HistoryRecorder{events: make(map[string][]Event)}
+	return &HistoryRecorder{
+		events: make(map[string][]Event),
+		seen:   make(map[string]struct{}),
+	}
 }
 
-func (r *HistoryRecorder) Record(event Event) {
+func (r *HistoryRecorder) Record(event Event) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	key := eventKey(event)
+	if _, ok := r.seen[key]; ok {
+		return false
+	}
 
 	events := append(r.events[event.LandID], event)
 	sort.SliceStable(events, func(i, j int) bool {
@@ -67,6 +77,8 @@ func (r *HistoryRecorder) Record(event Event) {
 		return events[i].BlockNumber < events[j].BlockNumber
 	})
 	r.events[event.LandID] = events
+	r.seen[key] = struct{}{}
+	return true
 }
 
 func (r *HistoryRecorder) Format(landID string) (OwnershipHistory, error) {
@@ -104,4 +116,8 @@ func (r *HistoryRecorder) Format(landID string) (OwnershipHistory, error) {
 	}
 
 	return history, nil
+}
+
+func eventKey(event Event) string {
+	return event.TransactionHash + ":" + strconv.FormatUint(uint64(event.LogIndex), 10)
 }
