@@ -3,6 +3,7 @@ package chain
 import (
 	"context"
 	"encoding/binary"
+	"log/slog"
 	"strings"
 	"testing"
 	"time"
@@ -24,7 +25,7 @@ func TestListener_decodeLandRegistered(t *testing.T) {
 		client:     client,
 		contract:   common.HexToAddress("0x1234567890123456789012345678901234567890"),
 		history:    land.NewHistoryRecorder(),
-		logger:     nil,
+		logger:     slog.Default(),
 		startBlock: nil,
 	}
 
@@ -81,7 +82,7 @@ func TestListener_decodeOwnershipTransferred(t *testing.T) {
 		client:     client,
 		contract:   common.HexToAddress("0x1234567890123456789012345678901234567890"),
 		history:    land.NewHistoryRecorder(),
-		logger:     nil,
+		logger:     slog.Default(),
 		startBlock: nil,
 	}
 
@@ -155,7 +156,7 @@ func TestListener_backfillPastEvents(t *testing.T) {
 		client:     client,
 		contract:   common.HexToAddress("0x1234567890123456789012345678901234567890"),
 		history:    land.NewHistoryRecorder(),
-		logger:     nil,
+		logger:     slog.Default(),
 		startBlock: new(uint64),
 	}
 	*listener.startBlock = 100
@@ -182,7 +183,7 @@ func TestListener_Run(t *testing.T) {
 		client:     client,
 		contract:   common.HexToAddress("0x1234567890123456789012345678901234567890"),
 		history:    land.NewHistoryRecorder(),
-		logger:     nil,
+		logger:     slog.Default(),
 		startBlock: new(uint64),
 	}
 	*listener.startBlock = 100
@@ -193,8 +194,8 @@ func TestListener_Run(t *testing.T) {
 	listener.parsedABI = parsedABI
 
 	// Run in a goroutine and cancel after a short time
-	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
-	defer cancel()
+	ctx, cancel := context.WithCancel(context.Background())
+	time.AfterFunc(100*time.Millisecond, cancel)
 
 	// Execute
 	err = listener.Run(ctx)
