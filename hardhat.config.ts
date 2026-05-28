@@ -26,13 +26,15 @@ export default defineConfig({
       type: "edr-simulated",
       chainType: "l1",
     },
-  amoy: {
-  type: "http",
-  chainType: "l1",
-  url: process.env.POLYGON_AMOY_RPC!,
-  accounts: [process.env.PRIVATE_KEY!],
-  gas: 2000000,
-  gasPrice: 25000000000,
-},
+    ...(process.env.POLYGON_AMOY_RPC && process.env.PRIVATE_KEY ? {
+      amoy: {
+        type: "http" as const,
+        chainType: "l1" as const,
+        url: process.env.POLYGON_AMOY_RPC,
+        accounts: [process.env.PRIVATE_KEY],
+        gas: 2000000,
+        gasPrice: 25000000000,
+      }
+    } : {}),
   },
 });

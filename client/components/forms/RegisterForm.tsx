@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FilePlus } from "lucide-react";
 import StatusBanner from "@/components/ui/StatusBanner";
+import { useRegisterLand } from "@/hooks/useLandRegistry";
+import { useAccount } from "wagmi";
+import { convertToSqMeters, isValidLandId } from "@/lib/utils";
 
 interface RegisterFormProps {
   onSuccess?: (txHash: string) => void;
@@ -10,6 +13,9 @@ interface RegisterFormProps {
 }
 
 export default function RegisterForm({ onSuccess, onError }: RegisterFormProps) {
+  const { address, isConnected } = useAccount();
+  const { registerLand, hash, isPending, isConfirming, isSuccess, error: contractError } = useRegisterLand();
+
   const [formData, setFormData] = useState({
     landId: "",
     location: "",
@@ -23,22 +29,36 @@ export default function RegisterForm({ onSuccess, onError }: RegisterFormProps) 
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [txHash, setTxHash] = useState<string>("");
 
+  // Auto-fill wallet address when connected
+  useEffect(() => {
+    if (isConnected && address) {
+      setFormData(prev => ({ ...prev, ownerWallet: address }));
+    }
+  }, [isConnected, address]);
+
+  // Handle transaction status
+  useEffect(() => {
+    if (isPending || isConfirming) {
+      setStatus("loading");
+    } else if (isSuccess && hash) {
+      setTxHash(hash);
+      setStatus("success");
+      onSuccess?.(hash);
+      setTimeout(() => setStatus("idle"), 5000);
+    } else if (contractError) {
+      setStatus("error");
+      onError?.();
+      setTimeout(() => setStatus("idle"), 5000);
+    }
+  }, [isPending, isConfirming, isSuccess, hash, contractError, onSuccess, onError]);
+
   // Validation functions
-  const validateLandId = (id: string): boolean => {
-    return /^[a-zA-Z0-9]+$/.test(id);
-  };
-
-  const validateAreaSize = (size: string): boolean => {
-    const num = parseFloat(size);
-    return !isNaN(num) && num > 0;
-  };
-
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.landId.trim()) {
       newErrors.landId = "Land ID is required";
-    } else if (!validateLandId(formData.landId)) {
+    } else if (!isValidLandId(formData.landId)) {
       newErrors.landId = "Land ID must be alphanumeric (no spaces or special characters)";
     }
 
@@ -48,7 +68,7 @@ export default function RegisterForm({ onSuccess, onError }: RegisterFormProps) 
 
     if (!formData.areaSize.trim()) {
       newErrors.areaSize = "Area size is required";
-    } else if (!validateAreaSize(formData.areaSize)) {
+    } else if (isNaN(parseFloat(formData.areaSize)) || parseFloat(formData.areaSize) <= 0) {
       newErrors.areaSize = "Area size must be a positive number";
     }
 
@@ -71,19 +91,19 @@ export default function RegisterForm({ onSuccess, onError }: RegisterFormProps) 
       return;
     }
 
-    setStatus("loading");
-    
-    // Simulate transaction with random tx hash
-    setTimeout(() => {
-      const mockTxHash = "0x" + Array.from({ length: 64 }, () => 
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("");
-      
-      setTxHash(mockTxHash);
-      setStatus("success");
-      onSuccess?.(mockTxHash);
-      setTimeout(() => setStatus("idle"), 5000);
-    }, 2000);
+    if (!isConnected) {
+      setErrors({ ...errors, ownerWallet: "Please connect your wallet first" });
+      return;
+    }
+
+    try {
+      const areaSqMeters = convertToSqMeters(parseFloat(formData.areaSize), formData.areaUnit as any);
+      registerLand(formData.landId, formData.location, areaSqMeters);
+    } catch (err) {
+      console.error("Error registering land:", err);
+      setStatus("error");
+      onError?.();
+    }
   };
 
   return (

@@ -4,56 +4,48 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import OwnershipCard from "@/components/ui/OwnershipCard";
 import EmptyState from "@/components/ui/EmptyState";
+import { useGetLandDetails } from "@/hooks/useLandRegistry";
+import { convertFromSqMeters, isValidLandId } from "@/lib/utils";
 
 export default function VerifyPage() {
   const [landId, setLandId] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [searchedLandId, setSearchedLandId] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
 
-  // Mock data for KE-001
-  const mockData: Record<string, any> = {
-    "KE-001": {
-      landId: "KE-001",
-      currentOwner: "Mike Johnson",
-      ownerWallet: "0xGhI39012",
-      location: "Nairobi, Karen District",
-      areaSize: "5.5 Acres",
-      dateRegistered: "Jan 15, 2024",
-    },
-  };
+  const { data: landDetails, isLoading, isError, error: queryError } = useGetLandDetails(searchedLandId);
+
+  // Debug logging
+  if (searchedLandId) {
+    console.log('Searching for:', searchedLandId);
+    console.log('Loading:', isLoading);
+    console.log('Error:', isError);
+    console.log('Query Error:', queryError);
+    console.log('Data:', landDetails);
+  }
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Input validation
     if (!landId) {
       setError("Please enter a Land ID");
-      setResult(null);
+      setSearchedLandId(undefined);
       return;
     }
     
-    // Alphanumeric validation
-    if (!/^[a-zA-Z0-9]+$/.test(landId)) {
+    if (!isValidLandId(landId)) {
       setError("Land ID must contain only letters and numbers");
-      setResult(null);
+      setSearchedLandId(undefined);
       return;
     }
     
-    setSearching(true);
     setError(null);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const data = mockData[landId];
-      if (data) {
-        setResult(data);
-      } else {
-        setResult(null);
-        setError("Land ID not found. This plot may not be registered on ArdhiChain.");
-      }
-      setSearching(false);
-    }, 1500);
+    setSearchedLandId(landId);
+  };
+
+  const formatAreaSize = (areaSqMeters: bigint) => {
+    const acres = convertFromSqMeters(areaSqMeters, 'acres');
+    const sqMeters = Number(areaSqMeters);
+    return `${acres} Acres (${sqMeters.toLocaleString()} sq m)`;
   };
 
   return (
@@ -83,44 +75,44 @@ export default function VerifyPage() {
           />
           <button
             type="submit"
-            disabled={searching}
+            disabled={isLoading}
             className="btn-primary disabled:opacity-50 flex items-center space-x-2"
           >
             <Search className="h-4 w-4" />
-            <span>{searching ? "Searching..." : "Search"}</span>
+            <span>{isLoading ? "Searching..." : "Search"}</span>
           </button>
         </form>
         
-        {error && !result && (
+        {error && (
           <p className="text-red-600 text-sm mt-2">{error}</p>
         )}
       </div>
 
       {/* Loading State */}
-      {searching && (
+      {isLoading && (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
         </div>
       )}
 
       {/* Result Card */}
-      {result && !searching && (
+      {landDetails && !isLoading && landDetails.exists && (
         <OwnershipCard
-          landId={result.landId}
-          currentOwner={result.currentOwner}
-          ownerWallet={result.ownerWallet}
-          location={result.location}
-          areaSize={result.areaSize}
-          dateRegistered={result.dateRegistered}
+          landId={searchedLandId || ""}
+          currentOwner="On-chain Owner"
+          ownerWallet={landDetails.currentOwner}
+          location={landDetails.location}
+          areaSize={formatAreaSize(landDetails.areaSqMeters)}
+          dateRegistered="On blockchain"
         />
       )}
 
       {/* Not Found State */}
-      {!result && !searching && error && (
+      {searchedLandId && !isLoading && (isError || !landDetails?.exists) && (
         <EmptyState
           type="not-found"
           title="Land ID Not Found"
-          description={error}
+          description="This land ID is not registered on ArdhiChain."
           icon="file"
         />
       )}

@@ -4,44 +4,16 @@ import { useState, useEffect } from "react";
 import { Search, Clock } from "lucide-react";
 import TimelineItem from "@/components/ui/TimelineItem";
 import EmptyState from "@/components/ui/EmptyState";
+import { useGetHistory } from "@/hooks/useLandRegistry";
+import { formatTimestamp, formatAddress } from "@/lib/utils";
 
 export default function HistoryPage() {
   const [landId, setLandId] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [history, setHistory] = useState<any[]>([]);
+  const [searchedLandId, setSearchedLandId] = useState<string | undefined>();
   const [searched, setSearched] = useState(false);
 
-  // Mock history data for KE-001
-  const mockHistory: Record<string, any[]> = {
-    "KE-001": [
-      {
-        id: 1,
-        eventType: "Registered",
-        date: "Jan 15, 2024",
-        from: "Genesis",
-        to: "0xAbC11234",
-        txHash: "0xaaa111",
-      },
-      {
-        id: 2,
-        eventType: "Transferred",
-        date: "Mar 22, 2024",
-        from: "0xAbC11234",
-        to: "0xDeF25678",
-        txHash: "0xbbb222",
-      },
-      {
-        id: 3,
-        eventType: "Transferred",
-        date: "Jun 10, 2024",
-        from: "0xDeF25678",
-        to: "0xGhI39012",
-        txHash: "0xccc333",
-      },
-    ],
-  };
+  const { data: historyData, isLoading, isError } = useGetHistory(searchedLandId);
 
-  // Check for URL parameter on mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const urlLandId = urlParams.get("landId");
@@ -59,21 +31,18 @@ export default function HistoryPage() {
 
   const handleSearchWithId = async (id: string) => {
     if (!id) return;
-    
-    setSearching(true);
     setSearched(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const data = mockHistory[id];
-      if (data) {
-        setHistory(data);
-      } else {
-        setHistory([]);
-      }
-      setSearching(false);
-    }, 1500);
+    setSearchedLandId(id);
   };
+
+  const history = historyData ? historyData.map((record: any, index: number) => ({
+    id: index + 1,
+    eventType: record.action,
+    date: formatTimestamp(record.timestamp),
+    from: index === 0 ? "Genesis" : formatAddress(historyData[index - 1].owner),
+    to: formatAddress(record.owner),
+    txHash: `0x${index.toString().padStart(6, '0')}`,
+  })) : [];
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
@@ -99,24 +68,24 @@ export default function HistoryPage() {
           />
           <button
             type="submit"
-            disabled={searching}
+            disabled={isLoading}
             className="btn-primary disabled:opacity-50 flex items-center space-x-2"
           >
             <Search className="h-4 w-4" />
-            <span>{searching ? "Searching..." : "Search"}</span>
+            <span>{isLoading ? "Searching..." : "Search"}</span>
           </button>
         </form>
       </div>
 
       {/* Loading State */}
-      {searching && (
+      {isLoading && (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
         </div>
       )}
 
       {/* Timeline View */}
-      {!searching && history.length > 0 && (
+      {!isLoading && history.length > 0 && (
         <div className="card">
           <div className="relative">
             {/* Timeline line */}
@@ -138,7 +107,7 @@ export default function HistoryPage() {
       )}
 
       {/* Empty State - No search yet */}
-      {!searching && !searched && (
+      {!isLoading && !searched && (
         <EmptyState
           type="empty"
           title="No Land ID Searched"
@@ -148,7 +117,7 @@ export default function HistoryPage() {
       )}
 
       {/* Not Found State */}
-      {!searching && searched && history.length === 0 && (
+      {!isLoading && searched && (isError || history.length === 0) && (
         <EmptyState
           type="not-found"
           title="No History Found"

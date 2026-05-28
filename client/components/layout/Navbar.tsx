@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, FilePlus, Send, Search, Landmark, History } from "lucide-react";
+import WalletConnect from "@/components/ui/WalletConnect";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -49,13 +50,8 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* Wallet Connect Button Placeholder */}
-          <div>
-            <button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
-              <span>Connect Wallet</span>
-            </button>
-          </div>
+          {/* Wallet Connect */}
+          <WalletConnect />
         </div>
       </div>
     </nav>

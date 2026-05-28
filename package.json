@@ -1,10 +1,20 @@
 {
   "name": "land-ledge",
   "version": "1.0.0",
-  "description": "This is a title deed verification platform built using BlockChain Technology and Solana system.",
+  "description": "ArdhiChain - A decentralized land registry system built on Ethereum blockchain",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "hardhat test",
+    "node": "hardhat node",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "update-frontend": "node scripts/update-frontend-address.js",
+    "compile": "hardhat compile",
+    "clean": "hardhat clean",
+    "setup": "npm install && cd client && npm install && cd ..",
+    "dev:contracts": "hardhat node",
+    "dev:frontend": "cd client && npm run dev",
+    "deploy-and-update": "npm run deploy:local && npm run update-frontend"
   },
   "repository": {
     "type": "git",

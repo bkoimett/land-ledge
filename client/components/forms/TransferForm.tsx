@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Send } from "lucide-react";
 import StatusBanner from "@/components/ui/StatusBanner";
+import { useTransferOwnership } from "@/hooks/useLandRegistry";
+import { useAccount } from "wagmi";
+import { Address } from "viem";
+import { isValidLandId, isValidEthereumAddress } from "@/lib/utils";
 
 interface TransferFormProps {
   onSuccess?: (txHash: string) => void;
@@ -10,6 +14,9 @@ interface TransferFormProps {
 }
 
 export default function TransferForm({ onSuccess, onError }: TransferFormProps) {
+  const { address, isConnected } = useAccount();
+  const { transferOwnership, hash, isPending, isConfirming, isSuccess, error: contractError } = useTransferOwnership();
+
   const [formData, setFormData] = useState({
     landId: "",
     currentOwner: "",
@@ -21,27 +28,42 @@ export default function TransferForm({ onSuccess, onError }: TransferFormProps) 
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [txHash, setTxHash] = useState<string>("");
 
+  // Auto-fill current owner when connected
+  useEffect(() => {
+    if (isConnected && address) {
+      setFormData(prev => ({ ...prev, currentOwner: address }));
+    }
+  }, [isConnected, address]);
+
+  // Handle transaction status
+  useEffect(() => {
+    if (isPending || isConfirming) {
+      setStatus("loading");
+    } else if (isSuccess && hash) {
+      setTxHash(hash);
+      setStatus("success");
+      onSuccess?.(hash);
+      setTimeout(() => setStatus("idle"), 5000);
+    } else if (contractError) {
+      setStatus("error");
+      onError?.();
+      setTimeout(() => setStatus("idle"), 5000);
+    }
+  }, [isPending, isConfirming, isSuccess, hash, contractError, onSuccess, onError]);
+
   // Validation functions
-  const validateLandId = (id: string): boolean => {
-    return /^[a-zA-Z0-9]+$/.test(id);
-  };
-
-  const validateWalletAddress = (address: string): boolean => {
-    return /^0x[a-fA-F0-9]{40}$/.test(address);
-  };
-
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.landId.trim()) {
       newErrors.landId = "Land ID is required";
-    } else if (!validateLandId(formData.landId)) {
+    } else if (!isValidLandId(formData.landId)) {
       newErrors.landId = "Land ID must be alphanumeric (no spaces or special characters)";
     }
 
     if (!formData.receiverAddress.trim()) {
       newErrors.receiverAddress = "Receiver's wallet address is required";
-    } else if (!validateWalletAddress(formData.receiverAddress)) {
+    } else if (!isValidEthereumAddress(formData.receiverAddress)) {
       newErrors.receiverAddress = "Invalid Ethereum address format (must be 0x + 40 hex characters)";
     }
 
@@ -60,19 +82,18 @@ export default function TransferForm({ onSuccess, onError }: TransferFormProps) 
       return;
     }
 
-    setStatus("loading");
-    
-    // Simulate transaction with random tx hash
-    setTimeout(() => {
-      const mockTxHash = "0x" + Array.from({ length: 64 }, () => 
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("");
-      
-      setTxHash(mockTxHash);
-      setStatus("success");
-      onSuccess?.(mockTxHash);
-      setTimeout(() => setStatus("idle"), 5000);
-    }, 2000);
+    if (!isConnected) {
+      setErrors({ ...errors, currentOwner: "Please connect your wallet first" });
+      return;
+    }
+
+    try {
+      transferOwnership(formData.landId, formData.receiverAddress as Address);
+    } catch (err) {
+      console.error("Error transferring ownership:", err);
+      setStatus("error");
+      onError?.();
+    }
   };
 
   return (
