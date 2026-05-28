@@ -31,6 +31,16 @@ type Listener struct {
 }
 
 func NewListener(client *ethclient.Client, contract common.Address, history *land.HistoryRecorder, logger *slog.Logger) (*Listener, error) {
+	if client == nil {
+		return nil, fmt.Errorf("ethereum client is required")
+	}
+	if contract == (common.Address{}) {
+		return nil, fmt.Errorf("contract address is required")
+	}
+	if history == nil {
+		return nil, fmt.Errorf("history recorder is required")
+	}
+
 	parsedABI, err := abi.JSON(strings.NewReader(LandRegistryABI))
 	if err != nil {
 		return nil, fmt.Errorf("parse land registry ABI: %w", err)
@@ -81,7 +91,10 @@ func (l *Listener) Run(ctx context.Context) error {
 		select {
 		case err := <-sub.Err():
 			return fmt.Errorf("event subscription failed: %w", err)
-		case entry := <-logs:
+		case entry, ok := <-logs:
+			if !ok {
+				return fmt.Errorf("event log channel closed")
+			}
 			event, err := l.decodeLog(entry)
 			if err != nil {
 				l.logger.Warn("skipping unrecognized land event", "error", err, "tx", entry.TxHash.Hex())

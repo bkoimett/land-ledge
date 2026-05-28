@@ -16,19 +16,41 @@ The listener monitors these contract events:
 
 ## Run
 
+Prerequisites:
+
+- Go 1.22+
+- A WebSocket Ethereum RPC URL
+- A deployed land registry contract address that emits the supported events
+
+Set the required environment variables and start the backend:
+
 ```sh
 RPC_URL=wss://your-ethereum-rpc \
 CONTRACT_ADDRESS=0x0000000000000000000000000000000000000000 \
 go run ./cmd/listener
 ```
 
-Optional:
+The command starts both:
+
+- a live Ethereum event listener for the configured contract
+- a Gin HTTP API for health checks and in-memory ownership history
+
+Optional environment variable:
 
 ```sh
 HTTP_ADDR=:8080
 ```
 
+If `HTTP_ADDR` is not set, the API listens on `:8080`.
+
 Endpoints:
 
 - `GET /healthz`
 - `GET /lands/:landID/history`
+
+Example checks:
+
+```sh
+curl http://localhost:8080/healthz
+curl http://localhost:8080/lands/1001/history
+```
