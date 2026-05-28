@@ -4,7 +4,12 @@ import { useState } from "react";
 import { FilePlus } from "lucide-react";
 import StatusBanner from "@/components/ui/StatusBanner";
 
-export default function RegisterPage() {
+interface RegisterFormProps {
+  onSuccess?: (txHash: string) => void;
+  onError?: () => void;
+}
+
+export default function RegisterForm({ onSuccess, onError }: RegisterFormProps) {
   const [formData, setFormData] = useState({
     landId: "",
     location: "",
@@ -76,6 +81,7 @@ export default function RegisterPage() {
       
       setTxHash(mockTxHash);
       setStatus("success");
+      onSuccess?.(mockTxHash);
       setTimeout(() => setStatus("idle"), 5000);
     }, 2000);
   };

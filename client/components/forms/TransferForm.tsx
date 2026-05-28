@@ -4,7 +4,12 @@ import { useState } from "react";
 import { Send } from "lucide-react";
 import StatusBanner from "@/components/ui/StatusBanner";
 
-export default function TransferPage() {
+interface TransferFormProps {
+  onSuccess?: (txHash: string) => void;
+  onError?: () => void;
+}
+
+export default function TransferForm({ onSuccess, onError }: TransferFormProps) {
   const [formData, setFormData] = useState({
     landId: "",
     currentOwner: "",
@@ -65,6 +70,7 @@ export default function TransferPage() {
       
       setTxHash(mockTxHash);
       setStatus("success");
+      onSuccess?.(mockTxHash);
       setTimeout(() => setStatus("idle"), 5000);
     }, 2000);
   };
@@ -123,7 +129,7 @@ export default function TransferPage() {
           {/* Receiver's Wallet Address */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Receiver&apos;s Wallet Address *
+              Receiver's Wallet Address *
             </label>
             <input
               type="text"
@@ -164,7 +170,7 @@ export default function TransferPage() {
           {/* Warning Banner */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <p className="text-sm text-yellow-800">
-              ⚠️ Warning: This action is irreversible. Please verify the receiver&apos;s address carefully.
+              ⚠️ Warning: This action is irreversible. Please verify the receiver's address carefully.
             </p>
           </div>
 
