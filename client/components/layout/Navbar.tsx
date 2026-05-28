@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, FilePlus, Send, Search, Landmark } from "lucide-react";
+import { Home, FilePlus, Send, Search, Landmark, History } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -12,6 +12,7 @@ export default function Navbar() {
     { href: "/register", label: "Register Land", icon: FilePlus },
     { href: "/transfer", label: "Transfer", icon: Send },
     { href: "/verify", label: "Verify", icon: Search },
+    { href: "/history", label: "History", icon: History },
   ];
 
   return (
