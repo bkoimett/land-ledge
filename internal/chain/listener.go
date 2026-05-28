@@ -18,8 +18,8 @@ import (
 )
 
 const LandRegistryABI = `[
-	{"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"landId","type":"uint256"},{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":false,"internalType":"string","name":"titleDeedHash","type":"string"},{"indexed":false,"internalType":"string","name":"location","type":"string"}],"name":"LandRegistered","type":"event"},
-	{"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"landId","type":"uint256"},{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"}],"name":"OwnershipTransferred","type":"event"}
+	{"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"landId","type":"bytes32"},{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":false,"internalType":"string","name":"location","type":"string"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"LandRegistered","type":"event"},
+	{"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"landId","type":"bytes32"},{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"OwnershipTransferred","type":"event"}
 ]`
 
 // ETHClient defines the subset of ethclient.Client methods used by the listener
@@ -83,8 +83,8 @@ func (l *Listener) Run(ctx context.Context) error {
 		}
 	}
 
-	registered := l.parsedABI.Events[string(land.EventLandRegistered)]
-	transferred := l.parsedABI.Events[string(land.EventOwnershipTransferred)]
+	registered := l.parsedABI.Events["LandRegistered"]
+	transferred := l.parsedABI.Events["OwnershipTransferred"]
 
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{l.contract},
@@ -154,8 +154,8 @@ SubscriptionLoop:
 func (l *Listener) backfillPastEvents(ctx context.Context) error {
 	l.logger.Info("backfilling past events", "startBlock", *l.startBlock)
 
-	registered := l.parsedABI.Events[string(land.EventLandRegistered)]
-	transferred := l.parsedABI.Events[string(land.EventOwnershipTransferred)]
+	registered := l.parsedABI.Events["LandRegistered"]
+	transferred := l.parsedABI.Events["OwnershipTransferred"]
 
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{l.contract},
@@ -196,9 +196,9 @@ func (l *Listener) decodeLog(entry types.Log) (land.Event, error) {
 	}
 
 	switch entry.Topics[0] {
-	case l.parsedABI.Events[string(land.EventLandRegistered)].ID:
+	case l.parsedABI.Events["LandRegistered"].ID:
 		return l.decodeLandRegistered(entry)
-	case l.parsedABI.Events[string(land.EventOwnershipTransferred)].ID:
+	case l.parsedABI.Events["OwnershipTransferred"].ID:
 		return l.decodeOwnershipTransferred(entry)
 	default:
 		return land.Event{}, fmt.Errorf("unknown topic %s", entry.Topics[0])
@@ -211,23 +211,22 @@ func (l *Listener) decodeLandRegistered(entry types.Log) (land.Event, error) {
 	}
 
 	values := struct {
-		TitleDeedHash string
-		Location      string
+		Location  string
+		Timestamp *big.Int
 	}{}
-	if err := l.parsedABI.UnpackIntoInterface(&values, string(land.EventLandRegistered), entry.Data); err != nil {
+	if err := l.parsedABI.UnpackIntoInterface(&values, "LandRegistered", entry.Data); err != nil {
 		return land.Event{}, fmt.Errorf("unpack LandRegistered: %w", err)
 	}
 
 	return land.Event{
 		Type:            land.EventLandRegistered,
-		LandID:          topicUint(entry.Topics[1]).String(),
+		LandID:          entry.Topics[1].Hex(),
 		Owner:           topicAddress(entry.Topics[2]).Hex(),
-		TitleDeedHash:   values.TitleDeedHash,
 		Location:        values.Location,
 		TransactionHash: entry.TxHash.Hex(),
 		BlockNumber:     entry.BlockNumber,
 		LogIndex:        entry.Index,
-		ObservedAt:      time.Now().UTC(),
+		ObservedAt:      time.Unix(values.Timestamp.Int64(), 0).UTC(),
 	}, nil
 }
 
@@ -236,15 +235,22 @@ func (l *Listener) decodeOwnershipTransferred(entry types.Log) (land.Event, erro
 		return land.Event{}, fmt.Errorf("OwnershipTransferred expects 3 indexed topics")
 	}
 
+	values := struct {
+		Timestamp *big.Int
+	}{}
+	if err := l.parsedABI.UnpackIntoInterface(&values, "OwnershipTransferred", entry.Data); err != nil {
+		return land.Event{}, fmt.Errorf("unpack OwnershipTransferred: %w", err)
+	}
+
 	return land.Event{
 		Type:            land.EventOwnershipTransferred,
-		LandID:          topicUint(entry.Topics[1]).String(),
+		LandID:          entry.Topics[1].Hex(),
 		From:            topicAddress(entry.Topics[2]).Hex(),
 		To:              topicAddress(entry.Topics[3]).Hex(),
 		TransactionHash: entry.TxHash.Hex(),
 		BlockNumber:     entry.BlockNumber,
 		LogIndex:        entry.Index,
-		ObservedAt:      time.Now().UTC(),
+		ObservedAt:      time.Unix(values.Timestamp.Int64(), 0).UTC(),
 	}, nil
 }
 

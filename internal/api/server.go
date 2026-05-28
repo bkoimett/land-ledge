@@ -42,9 +42,9 @@ func NewRouter(history *land.HistoryRecorder) http.Handler {
 			return
 		}
 
-		// Validate that landID is a non-negative integer (supporting full uint256)
-		if bi, ok := new(big.Int).SetString(landID, 10); !ok || bi.Sign() < 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "landID must be a non-negative integer"})
+		// Validate that landID is a valid identifier (decimal or hex)
+		if bi, ok := new(big.Int).SetString(landID, 0); !ok || bi.Sign() < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "landID must be a non-negative integer or hex address"})
 			return
 		}
 

@@ -2,8 +2,8 @@ package chain
 
 import (
 	"context"
-	"encoding/binary"
 	"log/slog"
+	"math/big"
 	"strings"
 	"testing"
 	"time"
@@ -29,28 +29,27 @@ func TestListener_decodeLandRegistered(t *testing.T) {
 		startBlock: nil,
 	}
 
-	// Parse ABI to get event ID
+	// Parse ABI
 	parsedABI, err := abi.JSON(strings.NewReader(LandRegistryABI))
 	require.NoError(t, err)
 	listener.parsedABI = parsedABI
 
 	// Create a log for LandRegistered event
-	registeredID := parsedABI.Events[string(land.EventLandRegistered)].ID
-
-	// Data for LandRegistered: titleDeedHash (string), location (string)
-	// ABI encoding for two empty strings requires offsets and lengths
-	data := make([]byte, 128)
-	binary.BigEndian.PutUint64(data[24:32], 64) // Offset string 1
-	binary.BigEndian.PutUint64(data[56:64], 96) // Offset string 2
-
+	registeredID := parsedABI.Events["LandRegistered"].ID
+	landID := common.HexToHash("0x3e8")
 	ownerAddr := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	txHash := common.HexToHash("0x123")
+	timestamp := big.NewInt(1700000000)
+
+	// Pack data: string location, uint256 timestamp
+	data, err := parsedABI.Events["LandRegistered"].Inputs.NonIndexed().Pack("Nairobi", timestamp)
+	require.NoError(t, err)
 
 	log := types.Log{
 		Address: listener.contract,
 		Topics: []common.Hash{
 			registeredID,
-			common.HexToHash("0x3e8"),
+			landID,
 			common.BytesToHash(ownerAddr.Bytes()),
 		},
 		Data:        data,
@@ -65,13 +64,12 @@ func TestListener_decodeLandRegistered(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 	require.Equal(t, land.EventLandRegistered, event.Type)
-	require.Equal(t, "1000", event.LandID) // 0x3e8 = 1000
-	require.Equal(t, "0x1111111111111111111111111111111111111111", event.Owner)
-	require.Equal(t, "", event.TitleDeedHash)
-	require.Equal(t, "", event.Location)
+	require.Equal(t, landID.Hex(), event.LandID)
+	require.Equal(t, ownerAddr.Hex(), event.Owner)
+	require.Equal(t, "Nairobi", event.Location)
 	require.Equal(t, txHash.Hex(), event.TransactionHash)
 	require.Equal(t, uint64(100), event.BlockNumber)
-	require.Equal(t, uint(0), event.LogIndex)
+	require.Equal(t, time.Unix(timestamp.Int64(), 0).UTC(), event.ObservedAt)
 }
 
 // TestListener_decodeOwnershipTransferred tests decoding of OwnershipTransferred event
@@ -86,26 +84,32 @@ func TestListener_decodeOwnershipTransferred(t *testing.T) {
 		startBlock: nil,
 	}
 
-	// Parse ABI to get event ID
+	// Parse ABI
 	parsedABI, err := abi.JSON(strings.NewReader(LandRegistryABI))
 	require.NoError(t, err)
 	listener.parsedABI = parsedABI
 
 	// Create a log for OwnershipTransferred event
-	transferredID := parsedABI.Events[string(land.EventOwnershipTransferred)].ID
+	transferredID := parsedABI.Events["OwnershipTransferred"].ID
+	landID := common.HexToHash("0x3e8")
 	fromAddr := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	toAddr := common.HexToAddress("0x2222222222222222222222222222222222222222")
 	txHash := common.HexToHash("0x456")
+	timestamp := big.NewInt(1700000060)
+
+	// Pack data: uint256 timestamp
+	data, err := parsedABI.Events["OwnershipTransferred"].Inputs.NonIndexed().Pack(timestamp)
+	require.NoError(t, err)
 
 	log := types.Log{
 		Address: listener.contract,
 		Topics: []common.Hash{
 			transferredID,
-			common.HexToHash("0x3e8"),
+			landID,
 			common.BytesToHash(fromAddr.Bytes()),
 			common.BytesToHash(toAddr.Bytes()),
 		},
-		Data:        []byte{},
+		Data:        data,
 		TxHash:      txHash,
 		BlockNumber: 101,
 		Index:       1,
@@ -117,12 +121,12 @@ func TestListener_decodeOwnershipTransferred(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 	require.Equal(t, land.EventOwnershipTransferred, event.Type)
-	require.Equal(t, "1000", event.LandID)
-	require.Equal(t, "0x1111111111111111111111111111111111111111", event.From)
-	require.Equal(t, "0x2222222222222222222222222222222222222222", event.To)
+	require.Equal(t, landID.Hex(), event.LandID)
+	require.Equal(t, fromAddr.Hex(), event.From)
+	require.Equal(t, toAddr.Hex(), event.To)
 	require.Equal(t, txHash.Hex(), event.TransactionHash)
 	require.Equal(t, uint64(101), event.BlockNumber)
-	require.Equal(t, uint(1), event.LogIndex)
+	require.Equal(t, time.Unix(timestamp.Int64(), 0).UTC(), event.ObservedAt)
 }
 
 // mockSub implements ethereum.Subscription
@@ -149,8 +153,22 @@ func (m *mockEthClient) Close() {}
 // TestListener_backfillPastEvents tests the backfill functionality
 func TestListener_backfillPastEvents(t *testing.T) {
 	// Setup
+	parsedABI, err := abi.JSON(strings.NewReader(LandRegistryABI))
+	require.NoError(t, err)
+
+	landID := common.HexToHash("0x3e8")
+	timestamp := big.NewInt(1700000000)
+	data, _ := parsedABI.Events["LandRegistered"].Inputs.NonIndexed().Pack("Nairobi", timestamp)
+
 	client := &mockEthClientWithLogs{
-		logs: []types.Log{{}}, // Initialize with one log to satisfy the length assertion
+		logs: []types.Log{{
+			Topics: []common.Hash{
+				parsedABI.Events["LandRegistered"].ID,
+				landID,
+				common.BytesToHash(common.Address{}.Bytes()),
+			},
+			Data: data,
+		}},
 	}
 	listener := &Listener{
 		client:     client,
@@ -158,13 +176,9 @@ func TestListener_backfillPastEvents(t *testing.T) {
 		history:    land.NewHistoryRecorder(),
 		logger:     slog.Default(),
 		startBlock: new(uint64),
+		parsedABI:  parsedABI,
 	}
 	*listener.startBlock = 100
-
-	// Parse ABI
-	parsedABI, err := abi.JSON(strings.NewReader(LandRegistryABI))
-	require.NoError(t, err)
-	listener.parsedABI = parsedABI
 
 	// Execute
 	ctx := context.Background()
@@ -178,6 +192,9 @@ func TestListener_backfillPastEvents(t *testing.T) {
 // TestListener_Run tests the main run loop with backfill and subscription
 func TestListener_Run(t *testing.T) {
 	// Setup
+	parsedABI, err := abi.JSON(strings.NewReader(LandRegistryABI))
+	require.NoError(t, err)
+
 	client := &mockEthClientWithLogs{}
 	listener := &Listener{
 		client:     client,
@@ -185,13 +202,9 @@ func TestListener_Run(t *testing.T) {
 		history:    land.NewHistoryRecorder(),
 		logger:     slog.Default(),
 		startBlock: new(uint64),
+		parsedABI:  parsedABI,
 	}
 	*listener.startBlock = 100
-
-	// Parse ABI
-	parsedABI, err := abi.JSON(strings.NewReader(LandRegistryABI))
-	require.NoError(t, err)
-	listener.parsedABI = parsedABI
 
 	// Run in a goroutine and cancel after a short time
 	ctx, cancel := context.WithCancel(context.Background())
