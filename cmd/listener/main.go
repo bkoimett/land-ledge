@@ -5,10 +5,13 @@ import (
 	"errors"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"land-ledge/backend/internal/api"
 	"land-ledge/backend/internal/chain"
 	"land-ledge/backend/internal/config"
 	"land-ledge/backend/internal/land"
@@ -35,7 +38,32 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := listener.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+	server := &http.Server{
+		Addr:              cfg.HTTPAddr,
+		Handler:           api.NewRouter(history),
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	errs := make(chan error, 2)
+	go func() {
+		errs <- listener.Run(ctx)
+	}()
+	go func() {
+		slog.Info("starting HTTP API", "addr", cfg.HTTPAddr)
+		errs <- server.ListenAndServe()
+	}()
+
+	select {
+	case err := <-errs:
+		if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
+	case <-ctx.Done():
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Fatal(err)
 	}
 }
