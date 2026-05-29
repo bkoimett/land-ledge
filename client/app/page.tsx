@@ -1,85 +1,55 @@
-import { Landmark, Shield, Clock, Globe } from "lucide-react";
-import Link from "next/link";
+import { Landmark } from "lucide-react";
+import RegisterForm from "@/components/forms/RegisterForm";
+import TransferForm from "@/components/forms/TransferForm";
 
 export default function Home() {
-  const features = [
-    {
-      icon: Shield,
-      title: "Immutable Records",
-      description: "Land records cannot be altered or tampered with once registered",
-    },
-    {
-      icon: Clock,
-      title: "Instant Verification",
-      description: "Verify land ownership instantly with transparent history",
-    },
-    {
-      icon: Globe,
-      title: "Borderless Access",
-      description: "Access land records from anywhere in the world",
-    },
-  ];
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
-      {/* Hero Section */}
-      <div className="text-center mb-16">
-        <div className="flex justify-center mb-6">
-          <div className="bg-green-100 p-4 rounded-full">
-            <Landmark className="h-16 w-16 text-green-600" />
-          </div>
+    <main className="pt-32 pb-20 px-4 md:px-16 max-w-[1440px] mx-auto mesh-gradient">
+
+      {/* Header */}
+      <div className="mb-12">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-2 h-2 rounded-full bg-[#10b981] live-pulse relative" />
+          <span className="font-mono text-xs tracking-widest uppercase text-[#10b981]">
+            Network Status: Polygon Amoy Connected
+          </span>
         </div>
-        <h1 className="text-5xl font-bold text-gray-900 mb-4">
-          Blockchain Land Registry
+        <h1 className="text-5xl font-bold text-[#191c1e] mb-4 tracking-tight">
+          Registry Management Console
         </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Secure, transparent, and immutable land ownership registration powered by blockchain technology
+        <p className="text-base text-[#3c4a42] max-w-2xl">
+          Securely mint land assets onto the blockchain or transfer ownership via immutable smart contracts. All operations are final and cryptographically verified.
         </p>
-        <div className="mt-8 space-x-4">
-          <Link href="/register" className="inline-block btn-primary">
-            Register Land
-          </Link>
-          <Link href="/verify" className="inline-block bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition">
-            Verify Ownership
-          </Link>
-        </div>
       </div>
 
-      {/* Features Section */}
-      <div className="grid md:grid-cols-3 gap-8 mb-16">
-        {features.map((feature, index) => {
-          const Icon = feature.icon;
-          return (
-            <div key={index} className="card text-center hover:shadow-lg transition">
-              <div className="flex justify-center mb-4">
-                <div className="bg-green-100 p-3 rounded-full">
-                  <Icon className="h-8 w-8 text-green-600" />
-                </div>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-gray-600">{feature.description}</p>
-            </div>
-          );
-        })}
+      {/* Dual Column Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Register New Asset */}
+        <RegisterForm />
+        
+        {/* Right: Transfer Land Title */}
+        <TransferForm />
       </div>
 
-      {/* Stats Section */}
-      <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-8 text-white">
-        <div className="grid md:grid-cols-3 gap-8 text-center">
-          <div>
-            <div className="text-3xl font-bold mb-2">100%</div>
-            <div className="text-green-100">Immutable Security</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold mb-2">Instant</div>
-            <div className="text-green-100">Verification Time</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold mb-2">Blockchain</div>
-            <div className="text-green-100">Powered</div>
-          </div>
+      {/* Network Stats Bar */}
+      <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="card-panel p-6 rounded-xl text-center">
+          <p className="font-mono text-xs tracking-widest uppercase text-[#3c4a42] mb-1">Current Gas</p>
+          <p className="font-mono text-xl text-[#10b981]">32.4 Gwei</p>
+        </div>
+        <div className="card-panel p-6 rounded-xl text-center">
+          <p className="font-mono text-xs tracking-widest uppercase text-[#3c4a42] mb-1">Block Time</p>
+          <p className="font-mono text-xl text-[#191c1e]">2.1s</p>
+        </div>
+        <div className="card-panel p-6 rounded-xl text-center">
+          <p className="font-mono text-xs tracking-widest uppercase text-[#3c4a42] mb-1">Assets Minted</p>
+          <p className="font-mono text-xl text-[#191c1e]">14,209</p>
+        </div>
+        <div className="card-panel p-6 rounded-xl text-center">
+          <p className="font-mono text-xs tracking-widest uppercase text-[#3c4a42] mb-1">Security Audit</p>
+          <p className="font-mono text-xl text-[#a43a3a]">Verified</p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
