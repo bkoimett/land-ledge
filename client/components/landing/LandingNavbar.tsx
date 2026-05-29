@@ -2,16 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, FilePlus, Send, Search, Landmark, History } from "lucide-react";
 import { useState, useEffect } from "react";
 import { mockConnectWallet } from "@/lib/mockBlockchain";
 
-export default function Navbar() {
+export default function LandingNavbar() {
   const pathname = usePathname();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Check localStorage on mount
   useEffect(() => {
     const storedAddress = localStorage.getItem("walletAddress");
     if (storedAddress) {
@@ -21,7 +19,6 @@ export default function Navbar() {
 
   const handleConnectWallet = async () => {
     if (walletAddress) {
-      // Disconnect
       setWalletAddress(null);
       localStorage.removeItem("walletAddress");
       return;
@@ -39,26 +36,8 @@ export default function Navbar() {
     }
   };
 
-  // Determine if we're on the landing page
-  const isLandingPage = pathname === "/";
-
-  // Dashboard nav items
-  const dashboardNavItems = [
-    { href: "/dashboard", label: "Dashboard", icon: Home },
-    { href: "/verify", label: "Verify Registry", icon: Search },
-    { href: "/history", label: "History", icon: History },
-  ];
-
-  // Landing nav items
-  const landingNavItems = [
-    { href: "#features", label: "Features" },
-    { href: "/verify", label: "Verify" },
-  ];
-
-  const navItems = isLandingPage ? landingNavItems : dashboardNavItems;
-
   return (
-    <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-16 h-20 bg-white/80 backdrop-blur-md border-b border-[#bbcabf]/30">
+    <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white/80 backdrop-blur-md border-b border-[#bbcabf]/30">
       <div className="flex items-center gap-8">
         {/* Logo */}
         <Link href="/" className="text-xl font-bold text-[#191c1e]">
@@ -67,22 +46,12 @@ export default function Navbar() {
         
         {/* Nav Links - Desktop */}
         <nav className="hidden md:flex items-center gap-6">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`font-mono text-xs tracking-widest uppercase transition-colors ${
-                  isActive
-                    ? "text-[#10b981] border-b-2 border-[#10b981] pb-1"
-                    : "text-[#3c4a42] hover:text-[#006c49]"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+          <a href="#features" className="font-mono text-xs tracking-widest uppercase text-[#3c4a42] hover:text-[#006c49] transition-colors">
+            Features
+          </a>
+          <Link href="/verify" className="font-mono text-xs tracking-widest uppercase text-[#3c4a42] hover:text-[#006c49] transition-colors">
+            Verify
+          </Link>
         </nav>
       </div>
 
