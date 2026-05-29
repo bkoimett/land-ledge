@@ -19,7 +19,9 @@ export default function VerifyPage() {
     console.log('Searching for:', searchedLandId);
     console.log('Loading:', isLoading);
     console.log('Error:', isError);
-    console.log('Query Error:', queryError);
+    if (isError && queryError) {
+      console.log('Query Error:', queryError);
+    }
     console.log('Data:', landDetails);
   }
 

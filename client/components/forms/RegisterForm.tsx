@@ -46,6 +46,7 @@ export default function RegisterForm({ onSuccess, onError }: RegisterFormProps) 
       onSuccess?.(hash);
       setTimeout(() => setStatus("idle"), 5000);
     } else if (contractError) {
+      console.error('Contract Error:', contractError);
       setStatus("error");
       onError?.();
       setTimeout(() => setStatus("idle"), 5000);
@@ -98,6 +99,11 @@ export default function RegisterForm({ onSuccess, onError }: RegisterFormProps) 
 
     try {
       const areaSqMeters = convertToSqMeters(parseFloat(formData.areaSize), formData.areaUnit as any);
+      console.log('Submitting registration:', {
+        landId: formData.landId,
+        location: formData.location,
+        areaSqMeters: areaSqMeters.toString()
+      });
       registerLand(formData.landId, formData.location, areaSqMeters);
     } catch (err) {
       console.error("Error registering land:", err);

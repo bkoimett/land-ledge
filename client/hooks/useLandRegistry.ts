@@ -7,11 +7,13 @@ export function useRegisterLand() {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const registerLand = (landId: string, location: string, areaSqMeters: bigint) => {
+    console.log('Registering land:', { landId, location, areaSqMeters: areaSqMeters.toString() });
     writeContract({
       address: LAND_REGISTRY_ADDRESS,
       abi: LAND_REGISTRY_ABI,
       functionName: 'registerLand',
       args: [landId, location, areaSqMeters],
+      chainId: 31337,
     });
   };
 
@@ -35,6 +37,7 @@ export function useTransferOwnership() {
       abi: LAND_REGISTRY_ABI,
       functionName: 'transferOwnership',
       args: [landId, newOwner],
+      chainId: 31337,
     });
   };
 
