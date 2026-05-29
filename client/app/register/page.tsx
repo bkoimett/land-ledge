@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FilePlus } from "lucide-react";
 import StatusBanner from "@/components/ui/StatusBanner";
+import { mockRegisterLand } from "@/lib/mockBlockchain";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -17,6 +18,14 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [txHash, setTxHash] = useState<string>("");
+
+  // Auto-fill wallet address from localStorage
+  useEffect(() => {
+    const storedAddress = localStorage.getItem("walletAddress");
+    if (storedAddress) {
+      setFormData(prev => ({ ...prev, ownerWallet: storedAddress }));
+    }
+  }, []);
 
   // Validation functions
   const validateLandId = (id: string): boolean => {
@@ -68,16 +77,22 @@ export default function RegisterPage() {
 
     setStatus("loading");
     
-    // Simulate transaction with random tx hash
-    setTimeout(() => {
-      const mockTxHash = "0x" + Array.from({ length: 64 }, () => 
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("");
+    try {
+      const hash = await mockRegisterLand({
+        landId: formData.landId,
+        ownerName: formData.ownerName,
+        ownerAddress: formData.ownerWallet,
+        location: formData.location,
+        areaSize: `${formData.areaSize} ${formData.areaUnit}`
+      });
       
-      setTxHash(mockTxHash);
+      setTxHash(hash);
       setStatus("success");
       setTimeout(() => setStatus("idle"), 5000);
-    }, 2000);
+    } catch (error) {
+      console.error("Registration failed:", error);
+      setStatus("error");
+    }
   };
 
   return (

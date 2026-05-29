@@ -4,23 +4,21 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import OwnershipCard from "@/components/ui/OwnershipCard";
 import EmptyState from "@/components/ui/EmptyState";
+import { mockGetOwner, LandRecord } from "@/lib/mockBlockchain";
 
 export default function VerifyPage() {
   const [landId, setLandId] = useState("");
   const [searching, setSearching] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<LandRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock data for KE-001
-  const mockData: Record<string, any> = {
-    "KE-001": {
-      landId: "KE-001",
-      currentOwner: "Mike Johnson",
-      ownerWallet: "0xGhI39012",
-      location: "Nairobi, Karen District",
-      areaSize: "5.5 Acres",
-      dateRegistered: "Jan 15, 2024",
-    },
+  // Helper to format date
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -43,17 +41,20 @@ export default function VerifyPage() {
     setSearching(true);
     setError(null);
     
-    // Simulate API call
-    setTimeout(() => {
-      const data = mockData[landId];
+    try {
+      const data = await mockGetOwner(landId);
       if (data) {
         setResult(data);
       } else {
         setResult(null);
         setError("Land ID not found. This plot may not be registered on ArdhiChain.");
       }
+    } catch (error) {
+      setResult(null);
+      setError("Failed to fetch land data. Please try again.");
+    } finally {
       setSearching(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -107,11 +108,11 @@ export default function VerifyPage() {
       {result && !searching && (
         <OwnershipCard
           landId={result.landId}
-          currentOwner={result.currentOwner}
-          ownerWallet={result.ownerWallet}
+          currentOwner={result.ownerName}
+          ownerWallet={result.ownerAddress}
           location={result.location}
           areaSize={result.areaSize}
-          dateRegistered={result.dateRegistered}
+          dateRegistered={formatDate(result.registeredAt)}
         />
       )}
 

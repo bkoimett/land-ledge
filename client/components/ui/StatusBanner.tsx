@@ -28,9 +28,22 @@ export default function StatusBanner({ status, message, txHash }: StatusBannerPr
         }`}>
           {isSuccess ? "✅ " : "❌ "} {message}
         </p>
-        {txHash && (
+        {txHash && isSuccess && (
           <p className="text-xs mt-1 font-mono break-all">
-            Transaction: <span className={isSuccess ? "text-green-600" : "text-red-600"}>{txHash}</span>
+            Transaction:{" "}
+            <a
+              href={`https://amoy.polygonscan.com/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-green-600 hover:text-green-800 underline"
+            >
+              {txHash.slice(0, 10)}...{txHash.slice(-8)}
+            </a>
+          </p>
+        )}
+        {txHash && !isSuccess && (
+          <p className="text-xs mt-1 font-mono break-all">
+            Transaction: <span className="text-red-600">{txHash}</span>
           </p>
         )}
       </div>

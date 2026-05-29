@@ -4,42 +4,13 @@ import { useState, useEffect } from "react";
 import { Search, Clock } from "lucide-react";
 import TimelineItem from "@/components/ui/TimelineItem";
 import EmptyState from "@/components/ui/EmptyState";
+import { mockGetHistory, HistoryEvent } from "@/lib/mockBlockchain";
 
 export default function HistoryPage() {
   const [landId, setLandId] = useState("");
   const [searching, setSearching] = useState(false);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<HistoryEvent[]>([]);
   const [searched, setSearched] = useState(false);
-
-  // Mock history data for KE-001
-  const mockHistory: Record<string, any[]> = {
-    "KE-001": [
-      {
-        id: 1,
-        eventType: "Registered",
-        date: "Jan 15, 2024",
-        from: "Genesis",
-        to: "0xAbC11234",
-        txHash: "0xaaa111",
-      },
-      {
-        id: 2,
-        eventType: "Transferred",
-        date: "Mar 22, 2024",
-        from: "0xAbC11234",
-        to: "0xDeF25678",
-        txHash: "0xbbb222",
-      },
-      {
-        id: 3,
-        eventType: "Transferred",
-        date: "Jun 10, 2024",
-        from: "0xDeF25678",
-        to: "0xGhI39012",
-        txHash: "0xccc333",
-      },
-    ],
-  };
 
   // Check for URL parameter on mount
   useEffect(() => {
@@ -63,16 +34,15 @@ export default function HistoryPage() {
     setSearching(true);
     setSearched(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      const data = mockHistory[id];
-      if (data) {
-        setHistory(data);
-      } else {
-        setHistory([]);
-      }
+    try {
+      const data = await mockGetHistory(id);
+      setHistory(data);
+    } catch (error) {
+      console.error("Failed to fetch history:", error);
+      setHistory([]);
+    } finally {
       setSearching(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -124,7 +94,7 @@ export default function HistoryPage() {
             
             {history.map((event, index) => (
               <TimelineItem
-                key={event.id}
+                key={`${event.txHash}-${index}`}
                 eventType={event.eventType}
                 date={event.date}
                 from={event.from}

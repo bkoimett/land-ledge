@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Send } from "lucide-react";
 import StatusBanner from "@/components/ui/StatusBanner";
+import { mockTransferOwnership } from "@/lib/mockBlockchain";
 
 export default function TransferPage() {
   const [formData, setFormData] = useState({
@@ -15,6 +16,14 @@ export default function TransferPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [txHash, setTxHash] = useState<string>("");
+
+  // Auto-fill current owner from localStorage
+  useEffect(() => {
+    const storedAddress = localStorage.getItem("walletAddress");
+    if (storedAddress) {
+      setFormData(prev => ({ ...prev, currentOwner: storedAddress }));
+    }
+  }, []);
 
   // Validation functions
   const validateLandId = (id: string): boolean => {
@@ -57,16 +66,15 @@ export default function TransferPage() {
 
     setStatus("loading");
     
-    // Simulate transaction with random tx hash
-    setTimeout(() => {
-      const mockTxHash = "0x" + Array.from({ length: 64 }, () => 
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("");
-      
-      setTxHash(mockTxHash);
+    try {
+      const hash = await mockTransferOwnership(formData.landId, formData.receiverAddress);
+      setTxHash(hash);
       setStatus("success");
       setTimeout(() => setStatus("idle"), 5000);
-    }, 2000);
+    } catch (error) {
+      console.error("Transfer failed:", error);
+      setStatus("error");
+    }
   };
 
   return (

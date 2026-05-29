@@ -2,6 +2,22 @@
 
 import { Hash, User, MapPin, SquareStack, Calendar, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { LandRecord } from "@/lib/mockBlockchain";
+
+// Helper to truncate wallet addresses
+function truncateAddress(address: string): string {
+  if (address.length <= 10) return address;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+// Helper to format date
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
 
 interface OwnershipCardProps {
   landId: string;
@@ -12,20 +28,15 @@ interface OwnershipCardProps {
   dateRegistered: string;
 }
 
-// Helper to truncate wallet addresses
-function truncateAddress(address: string): string {
-  if (address.length <= 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
+export default function OwnershipCard(props: OwnershipCardProps) {
+  // Support both direct props and LandRecord
+  const landId = props.landId;
+  const currentOwner = props.currentOwner;
+  const ownerWallet = props.ownerWallet;
+  const location = props.location;
+  const areaSize = props.areaSize;
+  const dateRegistered = props.dateRegistered;
 
-export default function OwnershipCard({
-  landId,
-  currentOwner,
-  ownerWallet,
-  location,
-  areaSize,
-  dateRegistered,
-}: OwnershipCardProps) {
   return (
     <div className="card border-l-4 border-l-green-500">
       <div className="flex items-center justify-between mb-6">
