@@ -1,72 +1,51 @@
-# land-ledge
+# ArdhiChain - Blockchain Land Registry Demo
 
-Go backend for listening to Ethereum land registry contract events.
+A demo-ready land registry application that simulates blockchain interactions using mock data. No real blockchain or backend server required.
 
-## Backend
+## Features
 
-The module uses:
+- **Register Land** - Add new land records to the mock blockchain
+- **Transfer Ownership** - Transfer land to new wallet addresses
+- **Verify Ownership** - Search and verify land ownership details
+- **View History** - See complete ownership timeline for any land ID
 
-- `github.com/gin-gonic/gin` for the HTTP API
-- `github.com/ethereum/go-ethereum` for live Ethereum event subscriptions
+## Demo Credentials
 
-The listener monitors these contract events:
+Try these pre-seeded land IDs:
+- **KE-001** - James Omondi, Kisumu, Kondele Ward, Plot 45B
+- **KE-002** - Mary Wanjiku, Nairobi, Kilimani Area, Plot 12A
+- **KE-003** - John Mwangi, Mombasa, Nyali Beach, Plot 78B
 
-- `LandRegistered(bytes32 indexed landId, address indexed owner, string location, uint256 timestamp)`
-- `OwnershipTransferred(bytes32 indexed landId, address indexed previousOwner, address indexed newOwner, uint256 timestamp)`
+## How to Run Locally
 
-## Smart Contract Deployment
-
-To generate a new contract address, you must deploy the contract to a network.
-
-### 1. Start a local node
-```sh
-npx hardhat node
+```bash
+cd client
+npm install
+npm run dev
 ```
 
-### 2. Deploy the contract
-```sh
-npx hardhat run scripts/deploy.js --network localhost
-```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-The deployment script will output the new address to the console and save it to `deployments/contract.json`.
+## How It Works
 
-## Run
+All data is stored in browser memory (JavaScript objects) and persists during the session. Data resets when the page is refreshed.
 
-Prerequisites:
+### Mock Blockchain Functions
 
-- Go 1.22+
-- A WebSocket Ethereum RPC URL
-- A deployed land registry contract address
+- `mockConnectWallet()` - Simulates wallet connection (1.5s delay)
+- `mockRegisterLand(data)` - Registers new land (2s delay)
+- `mockTransferOwnership(landId, newOwner)` - Transfers ownership (2s delay)
+- `mockGetOwner(landId)` - Fetches land record (1s delay)
+- `mockGetHistory(landId)` - Fetches ownership history (1s delay)
 
-Set the required environment variables and start the backend:
+## Deployment
 
-```sh
-RPC_URL=ws://localhost:8545 \
-CONTRACT_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3 \
-go run ./cmd/listener
-```
+See [DEPLOY.md](./DEPLOY.md) for Vercel deployment instructions.
 
-The command starts both:
+## Tech Stack
 
-- a live Ethereum event listener for the configured contract
-- a Gin HTTP API for health checks and in-memory ownership history
-
-Optional environment variable:
-
-```sh
-HTTP_ADDR=:8080
-```
-
-If `HTTP_ADDR` is not set, the API listens on `:8080`.
-
-Endpoints:
-
-- `GET /healthz`
-- `GET /lands/:landID/history` (landID can be decimal or hex hash)
-
-Example checks:
-
-```sh
-curl http://localhost:8080/healthz
-curl http://localhost:8080/lands/0x125728072aa19c247fdbec783aafbd2a7322071ae8a60c5f88953ca44f28eafa/history
-```
+- Next.js 16 (Turbopack)
+- React 19
+- TypeScript
+- Tailwind CSS
+- lucide-react (icons)

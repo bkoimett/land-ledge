@@ -28,6 +28,24 @@ const landRegistry: Record<string, LandRecord> = {
     areaSize: "0.5 acres",
     registeredAt: "2024-01-15T10:30:00Z",
     txHash: "0xaaa111bbb222ccc333ddd444eee555fff666aaa111bbb222ccc333ddd444eee5"
+  },
+  "KE-002": {
+    landId: "KE-002",
+    ownerName: "Mary Wanjiku",
+    ownerAddress: "0xDeF2567890123456789012345678901234567890",
+    location: "Nairobi, Kilimani Area, Plot 12A",
+    areaSize: "1.2 acres",
+    registeredAt: "2024-02-20T09:00:00Z",
+    txHash: "0xccc333ddd444eee555fff666aaa111bbb222ccc333ddd444eee7"
+  },
+  "KE-003": {
+    landId: "KE-003",
+    ownerName: "John Mwangi",
+    ownerAddress: "0xGhI3901234567890123456789012345678901234",
+    location: "Mombasa, Nyali Beach, Plot 78B",
+    areaSize: "2.0 acres",
+    registeredAt: "2024-03-10T14:45:00Z",
+    txHash: "0xddd444eee555fff666aaa111bbb222ccc333ddd444eee8"
   }
 };
 
@@ -47,6 +65,24 @@ const ownershipHistory: Record<string, HistoryEvent[]> = {
       from: "0xAbC1...abcd",
       to: "0xDeF2...5678",
       txHash: "0xbbb222ccc333ddd444eee555fff666aaa111bbb222ccc333ddd444eee6"
+    }
+  ],
+  "KE-002": [
+    {
+      eventType: "Registered",
+      date: "Feb 20, 2024 09:00 AM",
+      from: "Genesis",
+      to: "0xDeF2...7890",
+      txHash: "0xccc333ddd444eee555fff666aaa111bbb222ccc333ddd444eee7"
+    }
+  ],
+  "KE-003": [
+    {
+      eventType: "Registered",
+      date: "Mar 10, 2024 02:45 PM",
+      from: "Genesis",
+      to: "0xGhI3...8901",
+      txHash: "0xddd444eee555fff666aaa111bbb222ccc333ddd444eee8"
     }
   ]
 };

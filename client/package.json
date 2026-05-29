@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "vercel-build": "next build"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.100.14",
